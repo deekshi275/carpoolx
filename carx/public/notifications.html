@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Carpool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+
+    <script src="/header.js"></script>
+    <style>
+        .notifications-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .notification-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .notification-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .notification-title {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .notification-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-accepted {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .notification-details {
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            color: #666;
+        }
+
+        .detail-item i {
+            width: 20px;
+            color: #3498db;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .accept-button {
+            background: #28a745;
+            color: white;
+        }
+
+        .accept-button:hover {
+            background: #218838;
+        }
+
+        .reject-button {
+            background: #dc3545;
+            color: white;
+        }
+
+        .reject-button:hover {
+            background: #c82333;
+        }
+
+        .no-notifications {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .no-notifications i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .notifications-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .notification-actions {
+                flex-direction: column;
+            }
+
+            .action-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <main>
+        <div class="notifications-container">
+            <h1>Booking Requests</h1>
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading notifications...</p>
+            </div>
+            <div id="notifications">
+                <!-- Notifications will be populated here -->
+            </div>
+        </div>
+    </main>
+
+
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Fetch and display notifications
+        async function loadNotifications() {
+            const loading = document.querySelector('.loading');
+            const notificationsContainer = document.getElementById('notifications');
+            
+            loading.style.display = 'block';
+            notificationsContainer.innerHTML = '';
+
+            try {
+                // Get user's rides
+                const ridesResponse = await fetch('/api/rides', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const rides = await ridesResponse.json();
+
+                // Get booking requests for each ride
+                let allRequests = [];
+                for (const ride of rides) {
+                    const requestsResponse = await fetch(`/api/rides/${ride._id}/booking-requests`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const requests = await requestsResponse.json();
+                    allRequests = [...allRequests, ...requests.map(req => ({ ...req, ride }))];
+                }
+
+                // Sort requests by date
+                allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                if (allRequests.length === 0) {
+                    notificationsContainer.innerHTML = `
+                        <div class="no-notifications">
+                            <i class="fas fa-bell-slash"></i>
+                            <h3>No booking requests</h3>
+                            <p>You don't have any pending booking requests</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display requests
+                allRequests.forEach(request => {
+                    const card = createNotificationCard(request);
+                    notificationsContainer.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notificationsContainer.innerHTML = `
+                    <div class="no-notifications">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error loading notifications</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function createNotificationCard(request) {
+            const card = document.createElement('div');
+            card.className = 'notification-card';
+            
+            const statusClass = {
+                'pending': 'status-pending',
+                'accepted': 'status-accepted',
+                'rejected': 'status-rejected'
+            }[request.status];
+
+            const formattedDate = new Date(request.createdAt).toLocaleString();
+
+            card.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-title">
+                        Booking Request for ${request.ride.from} to ${request.ride.to}
+                    </div>
+                    <div class="notification-status ${statusClass}">
+                        ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                    </div>
+                </div>
+                <div class="notification-details">
+                    <div class="detail-item">
+                        <i class="fas fa-user"></i>
+                        <span>Passenger: ${request.passengerName}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-phone"></i>
+                        <span>Phone: ${request.passengerPhone}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>Email: ${request.passengerEmail}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-chair"></i>
+                        <span>Seats Requested: ${request.seatsBooked}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Requested on: ${formattedDate}</span>
+                    </div>
+                </div>
+                ${request.status === 'pending' ? `
+                    <div class="notification-actions">
+                        <button class="action-button accept-button" onclick="respondToRequest('${request._id}', 'accepted')" id="accept-${request._id}">
+                            <span class="button-text">Accept Request</span>
+                            <span class="loading-spinner" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
+                        </button>
+                        <button class="action-button reject-button" onclick="respondToRequest('${request._id}', 'rejected')" id="reject-${request._id}">
+                            <span class="button-text">Reject Request</span>
+                            <span class="loading-spinner" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+
+            return card;
+        }
+
+        async function respondToRequest(requestId, status) {
+            // Show loading state
+            const acceptButton = document.getElementById(`accept-${requestId}`);
+            const rejectButton = document.getElementById(`reject-${requestId}`);
+            
+            if (acceptButton) {
+                acceptButton.disabled = true;
+                acceptButton.querySelector('.button-text').style.display = 'none';
+                acceptButton.querySelector('.loading-spinner').style.display = 'inline';
+            }
+            if (rejectButton) {
+                rejectButton.disabled = true;
+                rejectButton.querySelector('.button-text').style.display = 'none';
+                rejectButton.querySelector('.loading-spinner').style.display = 'inline';
+            }
+
+            try {
+                console.log(`Responding to request ${requestId} with status: ${status}`);
+                
+                const response = await fetch(`/api/booking-requests/${requestId}/respond`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: Failed to respond to request`);
+                }
+
+                const requestData = await response.json();
+                console.log('Response data:', requestData);
+
+                // If request is accepted, store notification data and redirect
+                if (status === 'accepted') {
+                    // Get ride details from the booking request
+                    const rideDetails = requestData.bookingRequest?.rideId || {};
+                    
+                    // Store the notification data
+                    const notificationData = {
+                        type: 'booking_accepted',
+                        rideDetails: {
+                            from: rideDetails.from || 'Unknown',
+                            to: rideDetails.to || 'Unknown',
+                            date: rideDetails.date || new Date(),
+                            time: rideDetails.time || 'Unknown'
+                        },
+                        timestamp: Date.now()
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('latestNotification', JSON.stringify(notificationData));
+                    
+                    // Show success message and reload
+                    alert('Request accepted successfully!');
+                    loadNotifications();
+                    return;
+                }
+
+                // Reload notifications for other statuses
+                loadNotifications();
+            } catch (error) {
+                console.error('Error responding to request:', error);
+                alert(`Error: ${error.message}. Please try again.`);
+            } finally {
+                // Reset loading state
+                if (acceptButton) {
+                    acceptButton.disabled = false;
+                    acceptButton.querySelector('.button-text').style.display = 'inline';
+                    acceptButton.querySelector('.loading-spinner').style.display = 'none';
+                }
+                if (rejectButton) {
+                    rejectButton.disabled = false;
+                    rejectButton.querySelector('.button-text').style.display = 'inline';
+                    rejectButton.querySelector('.loading-spinner').style.display = 'none';
+                }
+            }
+        }
+
+        // Load notifications when page loads
+        document.addEventListener('DOMContentLoaded', loadNotifications);
+    </script>
+</body>
+</html> 

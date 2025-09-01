@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Booking Requests - RideShare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+
+    <style>
+        .requests-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .request-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .request-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .status-icon.accepted {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-icon.rejected {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-icon.pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .request-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .request-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+
+        .detail-item i {
+            color: #3498db;
+            width: 20px;
+        }
+
+        .request-message {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            color: #2c3e50;
+        }
+
+        .request-message.accepted {
+            background: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .request-message.rejected {
+            background: #ffebee;
+            border-left: 4px solid #c62828;
+        }
+
+        .request-message.pending {
+            background: #fff3e0;
+            border-left: 4px solid #ef6c00;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .no-requests i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .simple-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .simple-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .simple-header nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .simple-header .nav-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .simple-header .nav-link:hover {
+            color: #f1c40f;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-badge.accepted {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.rejected {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-badge.pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+
+        .toast.info {
+            background: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <header class="simple-header">
+        <div class="logo">
+            <i class="fas fa-car"></i> RideShare
+        </div>
+        <nav>
+            <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> Profile</a>
+            <a href="#" class="nav-link" id="notificationIndicator" style="position: relative;">
+                <i class="fas fa-bell"></i> Notifications
+                <span id="notificationBadge" style="position: absolute; top: -8px; right: -8px; background: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: none; align-items: center; justify-content: center;">0</span>
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="requests-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>My Booking Requests</h1>
+                <button onclick="loadRequests()" class="btn" style="background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading your booking requests...</p>
+            </div>
+            <div id="requestsList">
+                <!-- Request cards will be populated here -->
+            </div>
+        </div>
+    </main>
+
+
+
+    <script>
+        let refreshInterval;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRequests();
+            // Set up automatic refresh every 30 seconds
+            refreshInterval = setInterval(loadRequests, 30000);
+        });
+
+        // Clean up interval when page is unloaded
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Hide and remove toast
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Play notification sound function
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+                audio.volume = 0.3;
+                audio.play().catch(() => {}); // Ignore errors if audio fails
+            } catch (e) {
+                // Ignore audio errors
+            }
+        }
+
+        // Store previous requests to detect changes
+        let previousRequests = [];
+        let lastCheckTime = Date.now();
+
+        async function loadRequests() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const loading = document.querySelector('.loading');
+            const requestsList = document.getElementById('requestsList');
+            
+            loading.style.display = 'block';
+            requestsList.innerHTML = '';
+
+            try {
+                // Fetch booking requests for the logged-in user
+                const response = await fetch('/api/booking-requests/user', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                // Check if the response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Invalid content type:', contentType);
+                    throw new Error('Server returned non-JSON response');
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch booking requests');
+                }
+
+                const requests = await response.json();
+                console.log('Booking requests:', requests);
+
+                if (!Array.isArray(requests)) {
+                    console.error('Invalid response format:', requests);
+                    throw new Error('Invalid response format from server');
+                }
+
+                // Check for status changes and show notifications
+                let newNotifications = 0;
+                if (previousRequests.length > 0) {
+                    requests.forEach(request => {
+                        const previousRequest = previousRequests.find(prev => prev._id === request._id);
+                        if (previousRequest && previousRequest.status !== request.status) {
+                            // Status changed - show notification
+                            newNotifications++;
+                            if (request.status === 'accepted') {
+                                showToast('🎉 Your booking request has been accepted! Check your email/SMS for details.', 'success');
+                                // Play notification sound
+                                playNotificationSound();
+                            } else if (request.status === 'rejected') {
+                                showToast('❌ Your booking request has been rejected.', 'error');
+                                // Play notification sound
+                                playNotificationSound();
+                            }
+                        }
+                    });
+                }
+
+                // Check for new requests (requests created after last check)
+                requests.forEach(request => {
+                    const requestTime = new Date(request.createdAt).getTime();
+                    if (requestTime > lastCheckTime && !previousRequests.find(prev => prev._id === request._id)) {
+                        newNotifications++;
+                        showToast('📝 New booking request created!', 'info');
+                        playNotificationSound();
+                    }
+                });
+
+                // Update notification badge
+                const notificationBadge = document.getElementById('notificationBadge');
+                if (newNotifications > 0) {
+                    notificationBadge.textContent = newNotifications;
+                    notificationBadge.style.display = 'flex';
+                    // Hide badge after 5 seconds
+                    setTimeout(() => {
+                        notificationBadge.style.display = 'none';
+                    }, 5000);
+                }
+
+                // Update previous requests and last check time
+                previousRequests = requests;
+                lastCheckTime = Date.now();
+
+                if (requests.length === 0) {
+                    requestsList.innerHTML = `
+                        <div class="no-requests">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No Booking Requests</h3>
+                            <p>You haven't made any booking requests yet.</p>
+                            <a href="/search" class="btn">Find Rides</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort requests by date (newest first)
+                requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                // Group requests by status
+                const groupedRequests = {
+                    accepted: [],
+                    rejected: [],
+                    pending: []
+                };
+
+                requests.forEach(request => {
+                    if (request.status && request.ride) {
+                        groupedRequests[request.status].push(request);
+                    }
+                });
+
+                // Clear previous content
+                requestsList.innerHTML = '';
+
+                // Display requests by status
+                if (groupedRequests.accepted.length > 0) {
+                    const acceptedSection = document.createElement('div');
+                    acceptedSection.innerHTML = '<h2>Accepted Requests</h2>';
+                    groupedRequests.accepted.forEach(request => {
+                        acceptedSection.appendChild(createRequestCard(request));
+                    });
+                    requestsList.appendChild(acceptedSection);
+                }
+
+                if (groupedRequests.pending.length > 0) {
+                    const pendingSection = document.createElement('div');
+                    pendingSection.innerHTML = '<h2>Pending Requests</h2>';
+                    groupedRequests.pending.forEach(request => {
+                        pendingSection.appendChild(createRequestCard(request));
+                    });
+                    requestsList.appendChild(pendingSection);
+                }
+
+                if (groupedRequests.rejected.length > 0) {
+                    const rejectedSection = document.createElement('div');
+                    rejectedSection.innerHTML = '<h2>Rejected Requests</h2>';
+                    groupedRequests.rejected.forEach(request => {
+                        rejectedSection.appendChild(createRequestCard(request));
+                    });
+                    requestsList.appendChild(rejectedSection);
+                }
+
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                requestsList.innerHTML = `
+                    <div class="no-requests">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error Loading Requests</h3>
+                        <p>${error.message || 'Failed to load booking requests. Please try again later.'}</p>
+                        <button onclick="loadRequests()" class="btn" style="margin-top: 1rem;">
+                            <i class="fas fa-sync-alt"></i> Retry
+                        </button>
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function createRequestCard(request) {
+            const card = document.createElement('div');
+            card.className = 'request-card';
+
+            const statusIcon = request.status === 'accepted' ? 'check-circle' : 
+                             request.status === 'rejected' ? 'times-circle' : 'clock';
+            const statusClass = request.status;
+            
+            // Get status message based on request status
+            let statusMessage = request.driverMessage || '';
+            if (!statusMessage) {
+                switch(request.status) {
+                    case 'accepted':
+                        statusMessage = 'Your booking request has been accepted by the driver!';
+                        break;
+                    case 'rejected':
+                        statusMessage = 'Your booking request has been rejected by the driver.';
+                        break;
+                    default:
+                        statusMessage = 'Your booking request is pending driver approval.';
+                }
+            }
+
+            // Get ride details from the request
+            const ride = request.ride;
+
+            if (!ride) {
+                return card; // Return empty card if no ride details
+            }
+
+            card.innerHTML = `
+                <div class="request-header">
+                    <div class="status-icon ${statusClass}">
+                        <i class="fas fa-${statusIcon}"></i>
+                    </div>
+                    <div class="request-title">
+                        ${statusMessage}
+                        <span class="status-badge ${statusClass}">${request.status.toUpperCase()}</span>
+                    </div>
+                </div>
+                <div class="request-details">
+                    <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${ride.from} → ${ride.to}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>${new Date(ride.date).toLocaleDateString()}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>${ride.time}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-chair"></i>
+                        <span>${request.seatsBooked} seats</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-rupee-sign"></i>
+                        <span>₹${ride.price} per seat</span>
+                    </div>
+                </div>
+                ${request.status === 'accepted' ? `
+                    <div class="request-message accepted">
+                        <p><strong>Driver Details:</strong></p>
+                        <p>Name: ${ride.driverName}</p>
+                        <p>Phone: ${ride.driverPhone}</p>
+                        <p>Vehicle: ${ride.vehicleType} - ${ride.vehicleModel} (${ride.vehicleNumber})</p>
+                    </div>
+                ` : ''}
+                ${request.driverMessage ? `
+                    <div class="request-message ${request.status}">
+                        <p><strong>Driver's Message:</strong></p>
+                        <p>${request.driverMessage}</p>
+                    </div>
+                ` : ''}
+                <div class="request-message">
+                    <p><strong>Request Date:</strong> ${new Date(request.createdAt).toLocaleString()}</p>
+                </div>
+            `;
+
+            return card;
+        }
+    </script>
+</body>
+</html> 

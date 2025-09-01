@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Carpool App</title>
+    <link rel="stylesheet" href="auth.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .error-message {
+            color: #ff0000;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input.error {
+            border-color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    <div id="emailError" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <div id="passwordError" class="error-message"></div>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <p class="form-footer">Don't have an account? <a href="register.html">Register here</a></p>
+        </div>
+    </div>
+
+
+
+    <script>
+        // Validation functions
+        const validators = {
+            email: (value) => {
+                if (!value) return 'Email is required';
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) return 'Please enter a valid email address';
+                return '';
+            },
+            password: (value) => {
+                if (!value) return 'Password is required';
+                if (value.length < 8) return 'Password must be at least 8 characters long';
+                return '';
+            }
+        };
+
+        // Function to validate a single field
+        function validateField(fieldId, value) {
+            const errorElement = document.getElementById(`${fieldId}Error`);
+            const inputElement = document.getElementById(fieldId);
+            const error = validators[fieldId](value);
+            
+            if (error) {
+                errorElement.textContent = error;
+                errorElement.style.display = 'block';
+                inputElement.classList.add('error');
+                return false;
+            } else {
+                errorElement.style.display = 'none';
+                inputElement.classList.remove('error');
+                return true;
+            }
+        }
+
+        // Add input event listeners for real-time validation
+        document.getElementById('email').addEventListener('input', (e) => {
+            validateField('email', e.target.value);
+        });
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            validateField('password', e.target.value);
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Validate all fields
+            const isEmailValid = validateField('email', email);
+            const isPasswordValid = validateField('password', password);
+
+            if (!isEmailValid || !isPasswordValid) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/dashboard.html';
+                } else {
+                    // Show error message in a more user-friendly way
+                    const errorMessage = data.message || 'Login failed';
+                    document.getElementById('passwordError').textContent = errorMessage;
+                    document.getElementById('passwordError').style.display = 'block';
+                    document.getElementById('password').classList.add('error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('passwordError').textContent = 'Login failed. Please try again.';
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('password').classList.add('error');
+            }
+        });
+
+        // Check if user is already logged in
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = '/dashboard.html';
+            }
+            // Clear any stored values when the page loads
+            document.getElementById('loginForm').reset();
+        });
+    </script>
+</body>
+</html> 

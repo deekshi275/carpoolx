@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publish Ride - Carpool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/header.js"></script>
+    <style>
+        .publish-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .publish-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .publish-header h1 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .publish-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .tab-button.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .tab-button i {
+            margin-right: 0.5rem;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .price-input {
+            position: relative;
+        }
+
+        .price-input input {
+            padding-left: 2rem;
+        }
+
+        .price-input::before {
+            content: '₹';
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-button:hover {
+            background: #2980b9;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .publish-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        .section-title {
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title h3 {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .price-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .price-input {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 0.75rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .price-input input {
+            width: 100%;
+            padding: 0.75rem;
+            padding-left: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .price-input input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .price-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .suggestion-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .suggestion-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-buttons button {
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-buttons button:hover {
+            background: #e9ecef;
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .suggestion-buttons button.active {
+            background: #3498db;
+            border-color: #3498db;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .suggestion-buttons {
+                flex-direction: row;
+                justify-content: flex-start;
+            }
+        }
+
+        .simple-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .simple-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .simple-header nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .simple-header .nav-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+        .simple-header .nav-link:hover {
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+    <header class="simple-header">
+        <div class="logo">
+            <i class="fas fa-car"></i> RideShare
+        </div>
+        <nav>
+            <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> Profile</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="publish-container">
+            <div class="publish-header">
+                <h1>Publish Your Ride</h1>
+                <p>Share your journey and help others reach their destination</p>
+            </div>
+
+            <div class="publish-tabs">
+                <button class="tab-button active" onclick="switchTab('carpool')">
+                    <i class="fas fa-car"></i> Carpool
+                </button>
+                <button class="tab-button" onclick="switchTab('bikepool')">
+                    <i class="fas fa-motorcycle"></i> Bike Pool
+                </button>
+            </div>
+
+            <!-- Carpool Form -->
+            <form id="carpoolForm" class="form-section active">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="carFrom">From</label>
+                        <input type="text" id="carFrom" required placeholder="Starting location">
+                    </div>
+                    <div class="form-group">
+                        <label for="carTo">To</label>
+                        <input type="text" id="carTo" required placeholder="Destination">
+                    </div>
+                    <div class="form-group">
+                        <label for="carDate">Date</label>
+                        <input type="date" id="carDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="carTime">Time</label>
+                        <input type="time" id="carTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="carSeats">Available Seats</label>
+                        <select id="carSeats" required>
+                            <option value="1">1 Seat</option>
+                            <option value="2">2 Seats</option>
+                            <option value="3">3 Seats</option>
+                            <option value="4">4 Seats</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="carPrice">Price per Seat</label>
+                        <div class="price-input-container">
+                            <div class="price-input">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="carPrice" required min="0" step="10" placeholder="Enter price per seat">
+                            </div>
+                            <div class="price-suggestions">
+                                <span class="suggestion-label">Suggested ranges:</span>
+                                <div class="suggestion-buttons">
+                                    <button type="button" onclick="setSuggestedPrice('car', 50)">₹50</button>
+                                    <button type="button" onclick="setSuggestedPrice('car', 100)">₹100</button>
+                                    <button type="button" onclick="setSuggestedPrice('car', 150)">₹150</button>
+                                    <button type="button" onclick="setSuggestedPrice('car', 200)">₹200</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Details Section -->
+                <div class="section-title">
+                    <h3>Driver Details</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="carDriverName">Driver Name</label>
+                        <input type="text" id="carDriverName" required placeholder="Enter driver's full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="carDriverPhone">Phone Number</label>
+                        <input type="tel" id="carDriverPhone" required placeholder="Enter driver's phone number">
+                    </div>
+                    <div class="form-group">
+                        <label for="carDriverLicense">License Number</label>
+                        <input type="text" id="carDriverLicense" required placeholder="Enter driver's license number">
+                    </div>
+                </div>
+
+                <!-- Vehicle Details Section -->
+                <div class="section-title">
+                    <h3>Vehicle Details</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="carVehicleType">Vehicle Type</label>
+                        <input type="text" id="carVehicleType" required placeholder="Enter vehicle type (e.g., Sedan, SUV, Hatchback)">
+                    </div>
+                    <div class="form-group">
+                        <label for="carVehicleModel">Vehicle Model</label>
+                        <input type="text" id="carVehicleModel" required placeholder="Enter vehicle model">
+                    </div>
+                    <div class="form-group">
+                        <label for="carVehicleNumber">Vehicle Number</label>
+                        <input type="text" id="carVehicleNumber" required placeholder="Enter vehicle number">
+                    </div>
+                    <div class="form-group">
+                        <label for="carVehicleColor">Vehicle Color</label>
+                        <input type="text" id="carVehicleColor" required placeholder="Enter vehicle color">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="carDescription">Additional Details</label>
+                    <textarea id="carDescription" placeholder="Add any additional information about your ride..."></textarea>
+                </div>
+                <div id="carError" class="error-message"></div>
+                <button type="submit" class="submit-button">Publish Carpool Ride</button>
+            </form>
+
+            <!-- Bike Pool Form -->
+            <form id="bikepoolForm" class="form-section">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bikeFrom">From</label>
+                        <input type="text" id="bikeFrom" required placeholder="Starting location">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeTo">To</label>
+                        <input type="text" id="bikeTo" required placeholder="Destination">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeDate">Date</label>
+                        <input type="date" id="bikeDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeTime">Time</label>
+                        <input type="time" id="bikeTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeSeats">Available Seats</label>
+                        <select id="bikeSeats" required>
+                            <option value="1">1 Seat</option>
+                            <option value="2">2 Seats</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bikePrice">Price per Seat</label>
+                        <div class="price-input-container">
+                            <div class="price-input">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="bikePrice" required min="0" step="10" placeholder="Enter price per seat">
+                            </div>
+                            <div class="price-suggestions">
+                                <span class="suggestion-label">Suggested ranges:</span>
+                                <div class="suggestion-buttons">
+                                    <button type="button" onclick="setSuggestedPrice('bike', 30)">₹30</button>
+                                    <button type="button" onclick="setSuggestedPrice('bike', 50)">₹50</button>
+                                    <button type="button" onclick="setSuggestedPrice('bike', 75)">₹75</button>
+                                    <button type="button" onclick="setSuggestedPrice('bike', 100)">₹100</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Details Section -->
+                <div class="section-title">
+                    <h3>Driver Details</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bikeDriverName">Driver Name</label>
+                        <input type="text" id="bikeDriverName" required placeholder="Enter driver's full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeDriverPhone">Phone Number</label>
+                        <input type="tel" id="bikeDriverPhone" required placeholder="Enter driver's phone number">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeDriverLicense">License Number</label>
+                        <input type="text" id="bikeDriverLicense" required placeholder="Enter driver's license number">
+                    </div>
+                </div>
+
+                <!-- Vehicle Details Section -->
+                <div class="section-title">
+                    <h3>Vehicle Details</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bikeVehicleType">Vehicle Type</label>
+                        <input type="text" id="bikeVehicleType" required placeholder="Enter vehicle type (e.g., Scooter, Motorcycle, Electric Bike)">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeVehicleModel">Vehicle Model</label>
+                        <input type="text" id="bikeVehicleModel" required placeholder="Enter vehicle model">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeVehicleNumber">Vehicle Number</label>
+                        <input type="text" id="bikeVehicleNumber" required placeholder="Enter vehicle number">
+                    </div>
+                    <div class="form-group">
+                        <label for="bikeVehicleColor">Vehicle Color</label>
+                        <input type="text" id="bikeVehicleColor" required placeholder="Enter vehicle color">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="bikeDescription">Additional Details</label>
+                    <textarea id="bikeDescription" placeholder="Add any additional information about your ride..."></textarea>
+                </div>
+                <div id="bikeError" class="error-message"></div>
+                <button type="submit" class="submit-button">Publish Bike Pool Ride</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Switch between carpool and bikepool forms
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update form sections
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tab + 'Form').classList.add('active');
+        }
+
+        // Set default date and time
+        function setDefaultDateTime() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5); // Get HH:mm format
+
+            // Set default date and min date
+            document.getElementById('carDate').value = today;
+            document.getElementById('carDate').min = today;
+            document.getElementById('bikeDate').value = today;
+            document.getElementById('bikeDate').min = today;
+
+            // Set default time and min time for today
+            document.getElementById('carTime').value = currentTime;
+            document.getElementById('bikeTime').value = currentTime;
+        }
+
+        // Validate time based on selected date
+        function validateTime(input) {
+            const selectedDate = input.closest('form').querySelector('input[type="date"]').value;
+            const selectedTime = input.value;
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+
+            if (selectedDate === today && selectedTime < currentTime) {
+                input.value = currentTime;
+            }
+        }
+
+        // Add event listeners for time inputs
+        document.getElementById('carTime').addEventListener('change', function() {
+            validateTime(this);
+        });
+
+        document.getElementById('bikeTime').addEventListener('change', function() {
+            validateTime(this);
+        });
+
+        // Add event listeners for date inputs
+        document.getElementById('carDate').addEventListener('change', function() {
+            const timeInput = document.getElementById('carTime');
+            validateTime(timeInput);
+        });
+
+        document.getElementById('bikeDate').addEventListener('change', function() {
+            const timeInput = document.getElementById('bikeTime');
+            validateTime(timeInput);
+        });
+
+        // Validation functions
+        const validators = {
+            location: (value) => {
+                if (!value) return 'Location is required';
+                if (value.length < 3) return 'Location must be at least 3 characters long';
+                if (!/^[a-zA-Z0-9\s,.-]+$/.test(value)) return 'Location contains invalid characters';
+                return '';
+            },
+            date: (value) => {
+                if (!value) return 'Date is required';
+                const selectedDate = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selectedDate < today) return 'Date cannot be in the past';
+                return '';
+            },
+            time: (value, date) => {
+                if (!value) return 'Time is required';
+                const now = new Date();
+                const selectedDateTime = new Date(date + 'T' + value);
+                if (selectedDateTime < now) return 'Time cannot be in the past';
+                return '';
+            },
+            seats: (value, type) => {
+                if (!value) return 'Number of seats is required';
+                const seats = parseInt(value);
+                if (type === 'car' && (seats < 1 || seats > 4)) return 'Car rides can have 1-4 seats';
+                if (type === 'bike' && (seats < 1 || seats > 2)) return 'Bike rides can have 1-2 seats';
+                return '';
+            },
+            price: (value) => {
+                if (!value) return 'Price is required';
+                const price = parseFloat(value);
+                if (isNaN(price) || price < 0) return 'Price must be a positive number';
+                if (price > 10000) return 'Price seems too high';
+                return '';
+            },
+            driverName: (value) => {
+                if (!value) return 'Driver name is required';
+                if (value.length < 2) return 'Driver name must be at least 2 characters long';
+                if (!/^[a-zA-Z\s]{2,50}$/.test(value)) return 'Driver name should only contain letters and spaces';
+                return '';
+            },
+            driverPhone: (value) => {
+                if (!value) return 'Phone number is required';
+                if (!/^\d{10}$/.test(value)) return 'Please enter a valid 10-digit phone number';
+                return '';
+            },
+            driverLicense: (value) => {
+                if (!value) return 'License number is required';
+                if (value.length < 5) return 'License number must be at least 5 characters long';
+                if (!/^[A-Z0-9]{5,20}$/.test(value)) return 'License number should only contain uppercase letters and numbers';
+                return '';
+            },
+            vehicleType: (value, type) => {
+                if (!value) return 'Vehicle type is required';
+                if (type === 'car' && !/^(Sedan|SUV|Hatchback|Crossover|Van)$/i.test(value)) {
+                    return 'Please enter a valid car type (Sedan, SUV, Hatchback, Crossover, Van)';
+                }
+                if (type === 'bike' && !/^(Scooter|Motorcycle|Electric Bike)$/i.test(value)) {
+                    return 'Please enter a valid bike type (Scooter, Motorcycle, Electric Bike)';
+                }
+                return '';
+            },
+            vehicleModel: (value) => {
+                if (!value) return 'Vehicle model is required';
+                if (value.length < 2) return 'Vehicle model must be at least 2 characters long';
+                return '';
+            },
+            vehicleNumber: (value, type) => {
+                if (!value) return 'Vehicle number is required';
+                if (type === 'bike') {
+                    if (!/^[A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{4}$/.test(value)) {
+                        return 'Please enter a valid vehicle number (e.g., KA01AB1234)';
+                    }
+                } else {
+                    // For cars, just ensure it's not empty and has reasonable length
+                    if (value.length < 3 || value.length > 20) {
+                        return 'Vehicle number must be between 3 and 20 characters';
+                    }
+                }
+                return '';
+            },
+            vehicleColor: (value) => {
+                if (!value) return 'Vehicle color is required';
+                if (!/^[a-zA-Z\s]{2,20}$/.test(value)) return 'Please enter a valid color name';
+                return '';
+            }
+        };
+
+        // Function to validate a single field
+        function validateField(fieldId, value, type = null, date = null) {
+            const errorElement = document.getElementById(`${fieldId}Error`);
+            const inputElement = document.getElementById(fieldId);
+            let error = '';
+
+            if (fieldId.includes('From') || fieldId.includes('To')) {
+                error = validators.location(value);
+            } else if (fieldId.includes('Date')) {
+                error = validators.date(value);
+            } else if (fieldId.includes('Time')) {
+                error = validators.time(value, date);
+            } else if (fieldId.includes('Seats')) {
+                error = validators.seats(value, type);
+            } else if (fieldId.includes('Price')) {
+                error = validators.price(value);
+            } else if (fieldId.includes('DriverName')) {
+                error = validators.driverName(value);
+            } else if (fieldId.includes('DriverPhone')) {
+                error = validators.driverPhone(value);
+            } else if (fieldId.includes('DriverLicense')) {
+                error = validators.driverLicense(value);
+            } else if (fieldId.includes('VehicleType')) {
+                error = validators.vehicleType(value, type);
+            } else if (fieldId.includes('VehicleModel')) {
+                error = validators.vehicleModel(value);
+            } else if (fieldId.includes('VehicleNumber')) {
+                error = validators.vehicleNumber(value, type);
+            } else if (fieldId.includes('VehicleColor')) {
+                error = validators.vehicleColor(value);
+            }
+
+            if (error) {
+                if (!errorElement) {
+                    const newErrorElement = document.createElement('div');
+                    newErrorElement.id = `${fieldId}Error`;
+                    newErrorElement.className = 'error-message';
+                    inputElement.parentNode.appendChild(newErrorElement);
+                }
+                document.getElementById(`${fieldId}Error`).textContent = error;
+                document.getElementById(`${fieldId}Error`).style.display = 'block';
+                inputElement.classList.add('error');
+                return false;
+            } else {
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                }
+                inputElement.classList.remove('error');
+                return true;
+            }
+        }
+
+        // Add input event listeners for real-time validation
+        function addValidationListeners(formId, type) {
+            const form = document.getElementById(formId);
+            const inputs = form.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    const date = form.querySelector('input[type="date"]').value;
+                    validateField(e.target.id, value, type, date);
+                });
+            });
+
+            // Special handling for date input
+            const dateInput = form.querySelector('input[type="date"]');
+            dateInput.addEventListener('change', (e) => {
+                const timeInput = form.querySelector('input[type="time"]');
+                validateField(e.target.id, e.target.value, type);
+                if (timeInput.value) {
+                    validateField(timeInput.id, timeInput.value, type, e.target.value);
+                }
+            });
+        }
+
+        // Initialize validation listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            addValidationListeners('carpoolForm', 'car');
+            addValidationListeners('bikepoolForm', 'bike');
+            setDefaultDateTime();
+        });
+
+        // Modify the form submission handlers to include validation
+        document.getElementById('carpoolForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('carError');
+            
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Please login to publish a ride');
+                }
+
+                // Validate all fields
+                const fields = [
+                    'carFrom', 'carTo', 'carDate', 'carTime', 'carSeats', 'carPrice',
+                    'carDriverName', 'carDriverPhone', 'carDriverLicense',
+                    'carVehicleType', 'carVehicleModel', 'carVehicleNumber', 'carVehicleColor'
+                ];
+
+                let isValid = true;
+                const date = document.getElementById('carDate').value;
+
+                for (const field of fields) {
+                    const value = document.getElementById(field).value;
+                    if (!validateField(field, value, 'car', date)) {
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid) {
+                    throw new Error('Please fix the validation errors before submitting');
+                }
+
+                const seats = parseInt(document.getElementById('carSeats').value, 10);
+                const price = parseFloat(document.getElementById('carPrice').value);
+
+                const formData = {
+                    type: 'car',
+                    from: document.getElementById('carFrom').value,
+                    to: document.getElementById('carTo').value,
+                    date: document.getElementById('carDate').value,
+                    time: document.getElementById('carTime').value,
+                    seats: seats,
+                    price: price,
+                    description: document.getElementById('carDescription').value,
+                    // Add driver details
+                    driverName: document.getElementById('carDriverName').value,
+                    driverPhone: document.getElementById('carDriverPhone').value,
+                    driverLicense: document.getElementById('carDriverLicense').value,
+                    // Add vehicle details
+                    vehicleType: document.getElementById('carVehicleType').value,
+                    vehicleModel: document.getElementById('carVehicleModel').value,
+                    vehicleNumber: document.getElementById('carVehicleNumber').value,
+                    vehicleColor: document.getElementById('carVehicleColor').value
+                };
+
+                const response = await fetch('/api/rides', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Failed to publish ride');
+                }
+
+                const result = await response.json();
+                console.log('Ride published successfully:', result);
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error publishing ride:', error);
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        document.getElementById('bikepoolForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('bikeError');
+            
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Please login to publish a ride');
+                }
+
+                // Validate all fields
+                const fields = [
+                    'bikeFrom', 'bikeTo', 'bikeDate', 'bikeTime', 'bikeSeats', 'bikePrice',
+                    'bikeDriverName', 'bikeDriverPhone', 'bikeDriverLicense',
+                    'bikeVehicleType', 'bikeVehicleModel', 'bikeVehicleNumber', 'bikeVehicleColor'
+                ];
+
+                let isValid = true;
+                const date = document.getElementById('bikeDate').value;
+
+                for (const field of fields) {
+                    const value = document.getElementById(field).value;
+                    if (!validateField(field, value, 'bike', date)) {
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid) {
+                    throw new Error('Please fix the validation errors before submitting');
+                }
+
+                const seats = parseInt(document.getElementById('bikeSeats').value, 10);
+                const price = parseFloat(document.getElementById('bikePrice').value);
+
+                const formData = {
+                    type: 'bike',
+                    from: document.getElementById('bikeFrom').value,
+                    to: document.getElementById('bikeTo').value,
+                    date: document.getElementById('bikeDate').value,
+                    time: document.getElementById('bikeTime').value,
+                    seats: seats,
+                    price: price,
+                    description: document.getElementById('bikeDescription').value,
+                    // Add driver details
+                    driverName: document.getElementById('bikeDriverName').value,
+                    driverPhone: document.getElementById('bikeDriverPhone').value,
+                    driverLicense: document.getElementById('bikeDriverLicense').value,
+                    // Add vehicle details
+                    vehicleType: document.getElementById('bikeVehicleType').value,
+                    vehicleModel: document.getElementById('bikeVehicleModel').value,
+                    vehicleNumber: document.getElementById('bikeVehicleNumber').value,
+                    vehicleColor: document.getElementById('bikeVehicleColor').value
+                };
+
+                const response = await fetch('/api/rides', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Failed to publish ride');
+                }
+
+                const result = await response.json();
+                console.log('Ride published successfully:', result);
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error publishing ride:', error);
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // Add this function to your existing script
+        function setSuggestedPrice(type, price) {
+            const priceInput = document.getElementById(`${type}Price`);
+            priceInput.value = price;
+            
+            // Add visual feedback
+            const buttons = document.querySelectorAll(`#${type}Price`).closest('.price-input-container').querySelectorAll('.suggestion-buttons button');
+            buttons.forEach(button => {
+                button.classList.remove('active');
+                if (parseInt(button.textContent.replace('₹', '')) === price) {
+                    button.classList.add('active');
+                }
+            });
+        }
+
+        // Add input validation for price
+        document.getElementById('carPrice').addEventListener('input', function() {
+            validatePrice(this);
+        });
+
+        document.getElementById('bikePrice').addEventListener('input', function() {
+            validatePrice(this);
+        });
+
+        function validatePrice(input) {
+            const value = parseInt(input.value);
+            if (value < 0) {
+                input.value = 0;
+            }
+            // Remove active class from all suggestion buttons
+            const buttons = input.closest('.price-input-container').querySelectorAll('.suggestion-buttons button');
+            buttons.forEach(button => button.classList.remove('active'));
+        }
+    </script>
+</body>
+</html> 

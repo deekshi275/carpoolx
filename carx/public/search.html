@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Rides - Carpool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/header.js"></script>
+    <style>
+        .search-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .search-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .search-button {
+            width: 100%;
+            padding: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-button:hover {
+            background: #2980b9;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .ride-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .ride-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .ride-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .ride-type {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .ride-type.car {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .ride-type.bike {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .ride-details {
+            margin-bottom: 1rem;
+        }
+
+        .ride-details p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+
+        .ride-details i {
+            width: 20px;
+            color: #3498db;
+        }
+
+        .ride-price {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .book-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .book-button:hover {
+            background: #2980b9;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-primary:disabled:hover {
+            background: #95a5a6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .search-form {
+                padding: 1rem;
+            }
+        }
+
+        .driver-details,
+        .vehicle-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .driver-details h4,
+        .vehicle-details h4 {
+            color: #2c3e50;
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .detail-item i {
+            color: #3498db;
+            width: 20px;
+        }
+
+        .ride-description {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ride-description i {
+            color: #3498db;
+        }
+
+        .ride-description p {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #2c3e50;
+        }
+
+        #bookingForm .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        #bookingForm label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        #bookingForm input,
+        #bookingForm select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        #bookingForm input:focus,
+        #bookingForm select:focus {
+            border-color: #2ecc71;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.1);
+        }
+
+        #bookingForm input[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        #bookingError {
+            color: #e74c3c;
+            margin: 1rem 0;
+            display: none;
+        }
+        .logo {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        /* Remove the wheel animation */
+        .logo i::before {
+            display: inline-block;
+        }
+
+        .simple-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .simple-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .simple-header nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .simple-header .nav-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+        .simple-header .nav-link:hover {
+            color: #f1c40f;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1rem;
+        }
+
+        .submit-button:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <header class="simple-header">
+        <div class="logo">
+            <i class="fas fa-car"></i> RideShare
+        </div>
+        <nav>
+            <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> Profile</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="search-container">
+            <div class="search-form">
+                <h2>Search Available Rides</h2>
+                <form id="searchForm">
+                    <div class="search-grid">
+                        <div class="form-group">
+                            <label for="from">From</label>
+                            <input type="text" id="from" required placeholder="Starting location">
+                        </div>
+                        <div class="form-group">
+                            <label for="to">To</label>
+                            <input type="text" id="to" required placeholder="Destination">
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Date</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Ride Type</label>
+                            <select id="type">
+                                <option value="all">All Types</option>
+                                <option value="car">Car Pool</option>
+                                <option value="bike">Bike Pool</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="search-button">Search Rides</button>
+                </form>
+            </div>
+
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Searching for rides...</p>
+            </div>
+
+            <div id="results" class="results-container">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Book Ride</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="passengerName">Full Name</label>
+                    <input type="text" id="passengerName" required placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label for="passengerPhone">Phone Number</label>
+                    <input type="tel" id="passengerPhone" required placeholder="Enter your phone number">
+                </div>
+                <div class="form-group">
+                    <label for="passengerEmail">Email</label>
+                    <input type="email" id="passengerEmail" required placeholder="Enter your email" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="seatsBooked">Number of Seats</label>
+                    <select id="seatsBooked" required>
+                        <option value="1">1 Seat</option>
+                        <option value="2">2 Seats</option>
+                        <option value="3">3 Seats</option>
+                        <option value="4">4 Seats</option>
+                    </select>
+                </div>
+                <div id="bookingError" class="error-message"></div>
+                <button type="submit" class="submit-button">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to today
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Handle form submission
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            const date = document.getElementById('date').value;
+            const type = document.getElementById('type').value;
+
+            // Show loading
+            document.querySelector('.loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${date}&type=${type}`);
+                const rides = await response.json();
+
+                // Hide loading
+                document.querySelector('.loading').style.display = 'none';
+
+                if (rides.length === 0) {
+                    document.getElementById('results').innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+                            <h3>No rides found</h3>
+                            <p>Try adjusting your search criteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display results
+                displayRides(rides);
+
+            } catch (error) {
+                console.error('Error searching rides:', error);
+                document.querySelector('.loading').style.display = 'none';
+                document.getElementById('results').innerHTML = `
+                    <div class="no-results">
+                        <h3>Error searching rides</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            }
+        });
+
+        let currentRideId = null;
+        const modal = document.getElementById('bookingModal');
+        const closeBtn = document.querySelector('.close');
+        const bookingForm = document.getElementById('bookingForm');
+        const bookingError = document.getElementById('bookingError');
+
+        // Open modal when booking button is clicked
+        function bookRide(rideId, rideType, availableSeats) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please login to book a ride');
+                window.location.href = '/login';
+                return;
+            }
+
+            currentRideId = rideId;
+            updateAvailableSeats(rideType, availableSeats);
+
+            // Get user data from localStorage
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (userData) {
+                // Pre-fill the name and email fields
+                document.getElementById('passengerName').value = userData.name || '';
+                document.getElementById('passengerEmail').value = userData.email || '';
+                // Make email field read-only
+                document.getElementById('passengerEmail').setAttribute('readonly', true);
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        // Close modal
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+            bookingForm.reset();
+            bookingError.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                bookingForm.reset();
+                bookingError.style.display = 'none';
+            }
+        }
+
+        // Handle booking form submission
+        bookingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            bookingError.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('token');
+                const formData = {
+                    passengerName: document.getElementById('passengerName').value,
+                    passengerPhone: document.getElementById('passengerPhone').value,
+                    passengerEmail: document.getElementById('passengerEmail').value,
+                    seatsBooked: parseInt(document.getElementById('seatsBooked').value)
+                };
+
+                const response = await fetch(`/api/rides/${currentRideId}/book`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Failed to book ride');
+                }
+
+                const result = await response.json();
+                alert('Ride booked successfully!');
+                modal.style.display = 'none';
+                bookingForm.reset();
+                
+                // Refresh the search results
+                document.getElementById('searchForm').dispatchEvent(new Event('submit'));
+            } catch (error) {
+                console.error('Error booking ride:', error);
+                bookingError.textContent = error.message;
+                bookingError.style.display = 'block';
+            }
+        });
+
+        // Update available seats in booking form based on ride type
+        function updateAvailableSeats(rideType, availableSeats) {
+            const seatsSelect = document.getElementById('seatsBooked');
+            seatsSelect.innerHTML = '';
+            
+            const maxSeats = Math.min(availableSeats, rideType === 'car' ? 4 : 2);
+            for (let i = 1; i <= maxSeats; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i} Seat${i > 1 ? 's' : ''}`;
+                seatsSelect.appendChild(option);
+            }
+        }
+
+        function displayRides(rides) {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            if (rides.length === 0) {
+                resultsContainer.innerHTML = '<p class="no-results">No rides found matching your criteria.</p>';
+                return;
+            }
+
+            rides.forEach(ride => {
+                const rideCard = createRideCard(ride);
+                resultsContainer.appendChild(rideCard);
+            });
+        }
+
+        function createRideCard(ride) {
+            const card = document.createElement('div');
+            card.className = 'ride-card';
+            
+            const statusClass = ride.status === 'completed' ? 'status-completed' : 'status-active';
+            const statusText = ride.status === 'completed' ? 'Completed' : 'Active';
+            
+            // Debug log to check ride data
+            console.log('Ride data:', ride);
+            
+            card.innerHTML = `
+                <div class="ride-header">
+                    <h3>${ride.type === 'carpool' ? 'Car Pool' : 'Bike Pool'}</h3>
+                    <span class="status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="ride-details">
+                    <div class="detail">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <p class="label">From</p>
+                            <p>${ride.from}</p>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <p class="label">To</p>
+                            <p>${ride.to}</p>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-calendar"></i>
+                        <div>
+                            <p class="label">Date</p>
+                            <p>${new Date(ride.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <p class="label">Time</p>
+                            <p>${ride.time}</p>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-user"></i>
+                        <div>
+                            <p class="label">Available Seats</p>
+                            <p>${ride.seats}</p>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-rupee-sign"></i>
+                        <div>
+                            <p class="label">Price per Seat</p>
+                            <p>₹${ride.price || ride.pricePerSeat || 'N/A'}</p>
+                        </div>
+                    </div>
+                    ${ride.pendingBookings > 0 ? `
+                    <div class="detail">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <p class="label">Pending Bookings</p>
+                            <p>${ride.pendingBookings}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="ride-actions">
+                    <button class="btn btn-primary" onclick="bookRide('${ride._id}', '${ride.type}', ${ride.seats})" ${ride.seats === 0 ? 'disabled' : ''}>
+                        ${ride.seats === 0 ? 'No Seats Available' : 'Book Now'}
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Carpool App</title>
+    <link rel="stylesheet" href="auth.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .error-message {
+            color: #ff0000;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input.error {
+            border-color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2><i class="fas fa-user-plus"></i> Register</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="fullname"><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+                    <div id="fullnameError" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                    <div id="emailError" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
+                    <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" placeholder="Enter 10-digit mobile number" required>
+                    <div id="phoneError" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" name="password" placeholder="Create a password" required>
+                    <div id="passwordError" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                    <div id="confirmPasswordError" class="error-message"></div>
+                </div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+            <p class="form-footer">Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+
+
+
+    <script>
+        // Validation functions
+        function clearErrors() {
+            const fields = ['fullname','email','phone','password','confirmPassword'];
+            fields.forEach((id) => {
+                const errEl = document.getElementById(`${id}Error`);
+                if (errEl) {
+                    errEl.textContent = '';
+                    errEl.style.display = 'none';
+                }
+                const inputEl = document.getElementById(id);
+                if (inputEl) inputEl.classList.remove('error');
+            });
+        }
+
+        function showError(fieldId, message) {
+            const el = document.getElementById(`${fieldId}Error`);
+            if (el) {
+                el.textContent = message;
+                el.style.display = 'block';
+            }
+            const inputEl = document.getElementById(fieldId);
+            if (inputEl) inputEl.classList.add('error');
+        }
+        const validators = {
+            fullname: (value) => {
+                if (!value) return 'Full name is required';
+                if (value.length < 2) return 'Full name must be at least 2 characters long';
+                if (!/^[a-zA-Z\s]{2,50}$/.test(value)) return 'Full name should only contain letters and spaces';
+                return '';
+            },
+            email: (value) => {
+                if (!value) return 'Email is required';
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) return 'Please enter a valid email address';
+                return '';
+            },
+            phone: (value) => {
+                if (!value) return 'Phone number is required';
+                if (!/^\d{10}$/.test(value)) return 'Please enter a valid 10-digit phone number';
+                return '';
+            },
+            password: (value) => {
+                if (!value) return 'Password is required';
+                if (value.length < 8) return 'Password must be at least 8 characters long';
+                if (!/[A-Z]/.test(value)) return 'Password must contain at least one uppercase letter';
+                if (!/[a-z]/.test(value)) return 'Password must contain at least one lowercase letter';
+                if (!/[0-9]/.test(value)) return 'Password must contain at least one number';
+                if (!/[!@#$%^&*]/.test(value)) return 'Password must contain at least one special character (!@#$%^&*)';
+                return '';
+            },
+            confirmPassword: (value, password) => {
+                if (!value) return 'Please confirm your password';
+                if (value !== password) return 'Passwords do not match';
+                return '';
+            }
+        };
+
+        // Function to validate a single field
+        function validateField(fieldId, value, password = '') {
+            const errorElement = document.getElementById(`${fieldId}Error`);
+            const inputElement = document.getElementById(fieldId);
+            const error = validators[fieldId](value, password);
+            
+            if (error) {
+                errorElement.textContent = error;
+                errorElement.style.display = 'block';
+                inputElement.classList.add('error');
+                return false;
+            } else {
+                errorElement.style.display = 'none';
+                inputElement.classList.remove('error');
+                return true;
+            }
+        }
+
+        // Add input event listeners for real-time validation
+        document.getElementById('fullname').addEventListener('input', (e) => {
+            validateField('fullname', e.target.value);
+        });
+
+        document.getElementById('email').addEventListener('input', (e) => {
+            validateField('email', e.target.value);
+        });
+
+        document.getElementById('phone').addEventListener('input', (e) => {
+            validateField('phone', e.target.value);
+        });
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            validateField('password', e.target.value);
+            // Also validate confirm password when password changes
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (confirmPassword) {
+                validateField('confirmPassword', confirmPassword, e.target.value);
+            }
+        });
+
+        document.getElementById('confirmPassword').addEventListener('input', (e) => {
+            const password = document.getElementById('password').value;
+            validateField('confirmPassword', e.target.value, password);
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Reset previous errors
+            clearErrors();
+
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate all fields
+            const isFullnameValid = validateField('fullname', fullname);
+            const isEmailValid = validateField('email', email);
+            const isPhoneValid = validateField('phone', phone);
+            const isPasswordValid = validateField('password', password);
+            const isConfirmPasswordValid = validateField('confirmPassword', confirmPassword, password);
+
+            if (!isFullnameValid || !isEmailValid || !isPhoneValid || !isPasswordValid || !isConfirmPasswordValid) {
+                return;
+            }
+
+            try {
+                console.log('Sending registration request...');
+                const requestBody = { fullname, email, phone, password };
+                console.log('Request body:', requestBody);
+                
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                // Attempt to parse server response
+                let data = {};
+                try { 
+                    data = await response.json(); 
+                    console.log('Response data:', data);
+                } catch (parseError) {
+                    console.error('Error parsing response:', parseError);
+                    showError('password', 'Registration failed. Please try again.');
+                    return;
+                }
+
+                if (response.ok) {
+                    // Registration successful - redirect to login
+                    alert('Registration successful! Please login with your credentials.');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Show specific validation errors inline
+                const message = (data && data.message) ? data.message : 'Registration failed';
+                const lower = message.toLowerCase();
+                
+                if (lower.includes('exist')) { // user already exists
+                    showError('email', message);
+                    return;
+                }
+                if (lower.includes('phone')) { // phone validation error
+                    showError('phone', message);
+                    return;
+                }
+                if (lower.includes('email')) { // any other email-related server error
+                    showError('email', message);
+                    return;
+                }
+
+                // Fallback generic error under top field
+                showError('password', message);
+            } catch (error) {
+                console.error('Registration error:', error);
+                showError('password', 'Registration failed. Please try again. Check your internet connection.');
+            }
+        });
+
+        // Clear any stored values when the page loads
+        window.addEventListener('load', () => {
+            document.getElementById('registerForm').reset();
+        });
+    </script>
+</body>
+</html> 

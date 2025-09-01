@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Booking Requests - RideShare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .requests-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .requests-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .requests-tabs {
+            display: flex;
+            gap: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            color: #6c757d;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #3498db;
+            font-weight: 500;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -17px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #3498db;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .request-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .request-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-accepted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .request-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-item i {
+            color: #6c757d;
+            width: 20px;
+        }
+
+        .driver-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .driver-info h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .no-requests i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #dee2e6;
+        }
+
+        .requests-section {
+            display: none;
+        }
+
+        .requests-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <app-header></app-header>
+    <script src="/header.js"></script>
+
+    <main class="container">
+        <div class="requests-header">
+            <h1 class="requests-title">My Booking Requests</h1>
+            <div class="requests-tabs">
+                <button class="tab-button active" data-tab="active">Active Requests</button>
+                <button class="tab-button" data-tab="past">Past Requests</button>
+            </div>
+        </div>
+
+        <div id="active-requests" class="requests-section active">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div id="past-requests" class="requests-section">
+            <div class="loading-spinner"></div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRequests();
+            setupTabButtons();
+        });
+
+        function setupTabButtons() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and sections
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.requests-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+
+                    // Add active class to clicked button and corresponding section
+                    button.classList.add('active');
+                    const tabId = button.dataset.tab;
+                    document.getElementById(`${tabId}-requests`).classList.add('active');
+                });
+            });
+        }
+
+        async function loadRequests() {
+            const activeContainer = document.getElementById('active-requests');
+            const pastContainer = document.getElementById('past-requests');
+
+            try {
+                const response = await fetch('/api/booking-requests/user', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch requests');
+                }
+
+                const requests = await response.json();
+                
+                // Separate requests into active and past
+                const now = new Date();
+                const activeRequests = requests.filter(request => {
+                    const rideDate = new Date(request.ride.date);
+                    return rideDate >= now || request.status === 'pending';
+                });
+                
+                const pastRequests = requests.filter(request => {
+                    const rideDate = new Date(request.ride.date);
+                    return rideDate < now && request.status !== 'pending';
+                });
+
+                // Display active requests
+                if (activeRequests.length === 0) {
+                    activeContainer.innerHTML = `
+                        <div class="no-requests">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No Active Requests</h3>
+                            <p>You don't have any active booking requests.</p>
+                            <a href="/search" class="btn">Find Rides</a>
+                        </div>
+                    `;
+                } else {
+                    activeContainer.innerHTML = '';
+                    activeRequests.forEach(request => {
+                        const card = createRequestCard(request);
+                        activeContainer.appendChild(card);
+                    });
+                }
+
+                // Display past requests
+                if (pastRequests.length === 0) {
+                    pastContainer.innerHTML = `
+                        <div class="no-requests">
+                            <i class="fas fa-history"></i>
+                            <h3>No Past Requests</h3>
+                            <p>You don't have any past booking requests.</p>
+                        </div>
+                    `;
+                } else {
+                    pastContainer.innerHTML = '';
+                    pastRequests.forEach(request => {
+                        const card = createRequestCard(request);
+                        pastContainer.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                const errorMessage = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Failed to load booking requests. Please try again later.</p>
+                    </div>
+                `;
+                activeContainer.innerHTML = errorMessage;
+                pastContainer.innerHTML = errorMessage;
+            }
+        }
+
+        function createRequestCard(request) {
+            const card = document.createElement('div');
+            card.className = 'request-card';
+
+            const statusClass = `status-${request.status}`;
+            const statusText = request.status.charAt(0).toUpperCase() + request.status.slice(1);
+
+            card.innerHTML = `
+                <div class="request-header">
+                    <h3>Booking Request</h3>
+                    <span class="request-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="request-details">
+                    <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${request.ride.from} → ${request.ride.to}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>${new Date(request.ride.date).toLocaleDateString()}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>${request.ride.time}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-chair"></i>
+                        <span>${request.seatsBooked} seats</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-rupee-sign"></i>
+                        <span>₹${request.ride.pricePerSeat} per seat</span>
+                    </div>
+                </div>
+                ${request.status === 'accepted' ? `
+                    <div class="driver-info">
+                        <h4>Driver Information</h4>
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <i class="fas fa-user"></i>
+                                <span>${request.ride.driverName}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-phone"></i>
+                                <span>${request.ride.driverPhone}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-car"></i>
+                                <span>${request.ride.vehicleType} - ${request.ride.vehicleModel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-hashtag"></i>
+                                <span>${request.ride.vehicleNumber}</span>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+                ${request.status === 'rejected' ? `
+                    <div class="request-details">
+                        <div class="detail-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span>You can try booking another ride that better suits your needs.</span>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            return card;
+        }
+    </script>
+</body>
+</html> 

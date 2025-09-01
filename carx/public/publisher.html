@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carpool - Share Your Ride</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-right: 1rem;
+            cursor: pointer;
+            position: relative;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .user-profile i {
+            font-size: 1.2rem;
+            color: #3498db;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .profile-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #2c3e50;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .profile-dropdown a:hover {
+            background-color: #f8f9fa;
+        }
+
+        .profile-dropdown a i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .profile-dropdown .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .user-profile {
+                margin: 0.5rem 0;
+            }
+
+            .profile-dropdown {
+                position: static;
+                box-shadow: none;
+                margin-top: 0.5rem;
+            }
+        }
+
+        /* Animation styles */
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes welcomeMessage {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            20% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            80% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+        }
+
+        .welcome-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2ecc71;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+            animation: welcomeMessage 3s ease-in-out forwards;
+        }
+
+        .cta-buttons {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .feature-card {
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .hero {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .steps {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        /* Add animation delays for feature cards */
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+
+        /* Add animation delays for steps */
+        .step:nth-child(1) { animation-delay: 0.1s; }
+        .step:nth-child(2) { animation-delay: 0.2s; }
+        .step:nth-child(3) { animation-delay: 0.3s; }
+
+        /* Car Animation */
+        @keyframes driveCar {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes bounceCar {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        .logo i {
+            color: #3498db;
+            animation: driveCar 1s ease-out, bounceCar 2s ease-in-out infinite;
+        }
+
+        .logo span {
+            animation: fadeIn 1s ease-out;
+        }
+
+        /* Add a road effect */
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #3498db 20%, 
+                #3498db 80%, 
+                transparent 100%
+            );
+            animation: roadLine 1s ease-out;
+        }
+
+        @keyframes roadLine {
+            0% {
+                width: 0;
+                opacity: 0;
+            }
+            100% {
+                width: 100%;
+                opacity: 1;
+            }
+        }
+
+        /* Make logo container relative for absolute positioning */
+        .logo {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            overflow: hidden;
+        }
+
+        /* Remove the wheel animation */
+        .logo i::before {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Message -->
+    <div id="welcomeMessage" class="welcome-message">
+        Welcome back! <i class="fas fa-check-circle"></i>
+    </div>
+
+    <!-- Header Section -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-car"></i>
+            <span>Carpool</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="publish.html"><i class="fas fa-plus-circle"></i> Publish</a></li>
+                <li><a href="search.html"><i class="fas fa-search"></i> Search</a></li>
+                <li><a href="booking-status.html"><i class="fas fa-ticket-alt"></i> Passenger Request</a></li>
+                <li><a href="notifications.html"><i class="fas fa-handshake"></i> Rider Request</a></li>
+                <li id="auth-links">
+                    <a href="/login" class="auth-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="/register" class="auth-link register"><i class="fas fa-user-plus"></i> Register</a>
+                </li>
+                <li id="user-links" style="display: none;">
+                    <div class="user-profile" onclick="toggleProfileDropdown()">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="user-name" id="userName"></span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="/profile"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="#settings"><i class="fas fa-cog"></i> Settings</a>
+                        <div class="divider"></div>
+                        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content Section -->
+    <main>
+        <section class="hero">
+            <h1>Share Your Journey, Share Your Costs</h1>
+            <p>Join our community of carpoolers and make your daily commute more sustainable and economical.</p>
+            <div class="cta-buttons" id="auth-buttons">
+                <a href="/register" class="cta-button">Get Started</a>
+                <a href="/login" class="cta-button secondary">Login</a>
+            </div>
+            <div class="cta-buttons" id="user-buttons" style="display: none;">
+                <a href="publish.html" class="cta-button">Publish a Ride</a>
+                <a href="search.html" class="cta-button secondary">Find a Ride</a>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <i class="fas fa-money-bill-wave"></i>
+                <h3>Save Money</h3>
+                <p>Split travel costs with fellow commuters and reduce your transportation expenses.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-leaf"></i>
+                <h3>Eco-Friendly</h3>
+                <p>Reduce your carbon footprint by sharing rides and decreasing the number of cars on the road.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-users"></i>
+                <h3>Build Community</h3>
+                <p>Connect with like-minded individuals and make your commute more enjoyable.</p>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Create an Account</h3>
+                    <p>Sign up and complete your profile with your preferences and travel details.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Find or Offer Rides</h3>
+                    <p>Search for available rides or publish your own journey.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Connect & Travel</h3>
+                    <p>Connect with other users and start sharing your journey.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <p>We're dedicated to making carpooling easy, safe, and accessible for everyone.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#safety">Safety</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Connect With Us</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/kannada_sangha_?utm_source=qr&igsh=cmJmcTJqN3o1NjF5" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Carpool. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="auth.js"></script>
+    <script>
+        // Update UI based on authentication status
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const authLinks = document.getElementById('auth-links');
+            const userLinks = document.getElementById('user-links');
+            const authButtons = document.getElementById('auth-buttons');
+            const userButtons = document.getElementById('user-buttons');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+
+            if (token) {
+                try {
+                    const response = await fetch('http://localhost:3000/api/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        document.getElementById('userName').textContent = userData.fullname;
+                        
+                        // Show welcome message
+                        welcomeMessage.style.display = 'block';
+                        welcomeMessage.textContent = `Welcome back, ${userData.fullname}!`;
+                        
+                        // Remove welcome message after animation
+                        setTimeout(() => {
+                            welcomeMessage.style.display = 'none';
+                        }, 3000);
+                        
+                        // Store user data in localStorage for profile page
+                        localStorage.setItem('userData', JSON.stringify({
+                            fullname: userData.fullname,
+                            email: userData.email,
+                            createdAt: userData.createdAt
+                        }));
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+
+                authLinks.style.display = 'none';
+                userLinks.style.display = 'block';
+                authButtons.style.display = 'none';
+                userButtons.style.display = 'flex';
+
+                // Add animation classes to elements
+                document.querySelectorAll('.feature-card').forEach(card => {
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                    }, 100);
+                });
+
+                document.querySelectorAll('.step').forEach(step => {
+                    step.style.opacity = '0';
+                    setTimeout(() => {
+                        step.style.opacity = '1';
+                    }, 100);
+                });
+            } else {
+                authLinks.style.display = 'block';
+                userLinks.style.display = 'none';
+                authButtons.style.display = 'flex';
+                userButtons.style.display = 'none';
+            }
+        });
+
+        // Toggle profile dropdown
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            const dropdown = document.getElementById('profileDropdown');
+            const userProfile = document.querySelector('.user-profile');
+            
+            if (!userProfile.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html> 
