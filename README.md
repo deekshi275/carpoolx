@@ -56,9 +56,8 @@ slow/
   - **header.js**: Shared header/navigation logic.
   - **styles.css / auth.css**: Main and authentication-specific styles.
 
-## How to Run
-
-1. **Install dependencies**  
+##how to run
+1. **Install dependencies*  
    In the `slow` directory:
    ```sh
    npm install
